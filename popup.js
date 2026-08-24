@@ -488,8 +488,14 @@ async function generate(mode) {
 
   let promptList = [];
   if (mode === 'interview') {
+    let step1 = `${JD_ANALYSIS_PROMPT}\n\n用户输入岗位JD：\n${job}`;
+    if (resumeText) {
+      step1 += `\n\n用户已上传简历，请在标题中结合简历给出匹配度（例如"匹配度约70%"）。简历内容仅用于评估匹配度，不要写入输出正文。\n用户简历：\n${resumeText}`;
+    } else {
+      step1 += `\n\n用户未上传简历，标题不要输出匹配度或匹配分，只基于 JD 本身分析。`;
+    }
     promptList = [
-      { text: `${JD_ANALYSIS_PROMPT}\n\n用户输入岗位JD：\n${job}`, tokens: 2500 },
+      { text: step1, tokens: 2500 },
       { text: `${INTERVIEW_PREP_PROMPT}\n\n用户输入岗位JD：\n${job}`, tokens: 4000 }
     ];
   } else if (mode === 'greeting') {
