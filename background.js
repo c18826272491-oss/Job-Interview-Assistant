@@ -60,8 +60,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     disableEverywhere();
     sendResponse({ enabled: false });
   }
-  if (message.type === 'copyGuard:ready' && copyEnabled && sender.tab?.active) {
-    sendCopyState(sender.tab.id, true);
+  if (message.type === 'copyGuard:ready' && copyEnabled) {
+    const tabId = sender.tab?.id;
+    if (tabId) {
+      chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
+        sendCopyState(tabId, tabs[0]?.id === tabId);
+      });
+    }
   }
 });
 
@@ -80,6 +85,14 @@ chrome.runtime.onConnect.addListener((port) => {
 
 chrome.tabs.onActivated.addListener(() => {
   if (copyEnabled) enableForActiveTab();
+});
+
+// ── 同一标签页导航到新页面时补发状态 ──────────
+
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.status === 'complete' && copyEnabled && tab.active) {
+    sendCopyState(tabId, true);
+  }
 });
 
 chrome.tabs.onRemoved.addListener((tabId) => {
